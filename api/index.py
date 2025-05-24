@@ -1,11 +1,20 @@
 # api/index.py
-import json
-from http.server import BaseHTTPRequestHandler
+import csv
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type','application/json')
-        self.end_headers()
-        self.wfile.write(json.dumps({"message": "Hello!"}).encode('utf-8'))
-        return
+app = Flask(__name__)
+CORS(app)  # Enables CORS for all domains
+
+# Load CSV into memory
+marks_data = {}
+with open("marks.csv", "r") as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        marks_data[row["name"]] = int(row["marks"])
+
+@app.route("/api", methods=["GET"])
+def get_marks():
+    names = request.args.getlist("name")
+    result = [marks_data.get(name, None) for name in names]
+    return jsonify({"marks": result})
